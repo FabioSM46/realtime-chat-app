@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { addFriendValidator } from "@/lib/validations/add-friend";
 import { z } from "zod";
 import { getServerSession } from "next-auth";
-import { fetchRedis } from "@/app/helpers/redis";
+import { fetchRedis } from "@/helpers/redis";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
