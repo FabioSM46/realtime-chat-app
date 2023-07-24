@@ -39,8 +39,12 @@ export const authOptions: NextAuthOptions = {
       const dbUserResult = (await fetchRedis("get", `user:${token.id}`)) as
         | string
         | null;
+
       if (!dbUserResult) {
-        token.id = user!.id;
+        if (user) {
+          token.id = user!.id;
+        }
+
         return token;
       }
 
@@ -60,6 +64,7 @@ export const authOptions: NextAuthOptions = {
         session.user.email = token.email;
         session.user.image = token.picture;
       }
+
       return session;
     },
     redirect() {

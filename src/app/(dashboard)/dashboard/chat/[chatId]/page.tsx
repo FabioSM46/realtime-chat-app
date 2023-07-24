@@ -2,14 +2,33 @@ import ChatInput from "@/components/ChatInput";
 import Messages from "@/components/Messages";
 import { fetchRedis } from "@/helpers/redis";
 import { authOptions } from "@/lib/auth";
-import { db } from "@/lib/db";
 import { messageArrayValidator } from "@/lib/validations/message";
 import { getServerSession } from "next-auth";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { FC } from "react";
 
-interface pageProps {
+// The following generateMetadata functiion was written after the video and is purely optional
+export async function generateMetadata({
+  params,
+}: {
+  params: { chatId: string };
+}) {
+  const session = await getServerSession(authOptions);
+  if (!session) notFound();
+  const [userId1, userId2] = params.chatId.split("--");
+  const { user } = session;
+
+  const chatPartnerId = user.id === userId1 ? userId2 : userId1;
+  const chatPartnerRaw = (await fetchRedis(
+    "get",
+    `user:${chatPartnerId}`
+  )) as string;
+  const chatPartner = JSON.parse(chatPartnerRaw) as User;
+
+  return { title: `FriendZone | ${chatPartner.name} chat` };
+}
+
+interface PageProps {
   params: {
     chatId: string;
   };
@@ -23,11 +42,12 @@ async function getChatMessages(chatId: string) {
       0,
       -1
     );
+
     const dbMessages = results.map((message) => JSON.parse(message) as Message);
 
-    const reverseDbMessages = dbMessages.reverse();
+    const reversedDbMessages = dbMessages.reverse();
 
-    const messages = messageArrayValidator.parse(reverseDbMessages);
+    const messages = messageArrayValidator.parse(reversedDbMessages);
 
     return messages;
   } catch (error) {
@@ -35,7 +55,7 @@ async function getChatMessages(chatId: string) {
   }
 }
 
-const page = async ({ params }: pageProps) => {
+const page = async ({ params }: PageProps) => {
   const { chatId } = params;
   const session = await getServerSession(authOptions);
   if (!session) notFound();
@@ -49,9 +69,13 @@ const page = async ({ params }: pageProps) => {
   }
 
   const chatPartnerId = user.id === userId1 ? userId2 : userId1;
+  // new
 
-  const chatPartner = (await db.get(`user:${chatPartnerId}`)) as User;
-
+  const chatPartnerRaw = (await fetchRedis(
+    "get",
+    `user:${chatPartnerId}`
+  )) as string;
+  const chatPartner = JSON.parse(chatPartnerRaw) as User;
   const initialMessages = await getChatMessages(chatId);
 
   return (
@@ -69,17 +93,26 @@ const page = async ({ params }: pageProps) => {
               />
             </div>
           </div>
+
           <div className="flex flex-col leading-tight">
             <div className="text-xl flex items-center">
               <span className="text-gray-700 mr-3 font-semibold">
                 {chatPartner.name}
               </span>
             </div>
+
             <span className="text-sm text-gray-600">{chatPartner.email}</span>
           </div>
         </div>
       </div>
-      <Messages chatPartner={chatPartner} sessionImg={session.user.image} sessionId={session.user.id} initialMessages={initialMessages} />
+
+      <Messages
+        chatId={chatId}
+        chatPartner={chatPartner}
+        sessionImg={session.user.image}
+        sessionId={session.user.id}
+        initialMessages={initialMessages}
+      />
       <ChatInput chatId={chatId} chatPartner={chatPartner} />
     </div>
   );

@@ -1,13 +1,16 @@
 "use client";
 
-import { FC, useRef, useState } from "react";
+import { pusherClient } from "@/lib/pusher";
+import { cn, toPusherKey } from "@/lib/utils";
 import { Message } from "@/lib/validations/message";
-import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import Image from "next/image";
+import { FC, useEffect, useRef, useState } from "react";
+
 interface MessagesProps {
   initialMessages: Message[];
   sessionId: string;
+  chatId: string;
   sessionImg: string | null | undefined;
   chatPartner: User;
 }
@@ -15,33 +18,55 @@ interface MessagesProps {
 const Messages: FC<MessagesProps> = ({
   initialMessages,
   sessionId,
-  sessionImg,
+  chatId,
   chatPartner,
+  sessionImg,
 }) => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
 
+  useEffect(() => {
+    pusherClient.subscribe(toPusherKey(`chat:${chatId}`));
+
+    const messageHandler = (message: Message) => {
+      setMessages((prev) => [message, ...prev]);
+    };
+
+    pusherClient.bind("incoming-message", messageHandler);
+
+    return () => {
+      pusherClient.unsubscribe(toPusherKey(`chat:${chatId}`));
+      pusherClient.unbind("incoming-message", messageHandler);
+    };
+  }, [chatId]);
+
   const scrollDownRef = useRef<HTMLDivElement | null>(null);
+
   const formatTimestamp = (timestamp: number) => {
     return format(timestamp, "HH:mm");
   };
+
   return (
     <div
       id="messages"
       className="flex h-full flex-1 flex-col-reverse gap-4 p-3 overflow-y-auto scrollbar-thumb-blue scrollbar-thumb-rounded scrollbar-track-blue-lighter scrollbar-w-2 scrolling-touch"
     >
       <div ref={scrollDownRef} />
+
       {messages.map((message, index) => {
         const isCurrentUser = message.senderId === sessionId;
 
         const hasNextMessageFromSameUser =
           messages[index - 1]?.senderId === messages[index].senderId;
+
         return (
           <div
             className="chat-message"
             key={`${message.id}-${message.timestamp}`}
           >
             <div
-              className={cn("flex items-end", { "justify-end": isCurrentUser })}
+              className={cn("flex items-end", {
+                "justify-end": isCurrentUser,
+              })}
             >
               <div
                 className={cn(
@@ -93,4 +118,5 @@ const Messages: FC<MessagesProps> = ({
     </div>
   );
 };
+
 export default Messages;
