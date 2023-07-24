@@ -4,6 +4,8 @@ import { addFriendValidator } from "@/lib/validations/add-friend";
 import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { fetchRedis } from "@/helpers/redis";
+import { pusherServer } from "@/lib/pusher";
+import { toPusherKey } from "@/lib/utils";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -47,6 +49,16 @@ export async function POST(req: Request) {
       return new Response("Already friends with this user.", { status: 400 });
     }
     //valid request, send friend request
+
+    pusherServer.trigger(
+      toPusherKey(`user:${idToAdd}:incoming_friend_request`),
+      `incoming_friend_request`,
+      {
+        senderId: session.user.id,
+        senderEmail: session.user.email,
+      }
+    );
+
     db.sadd(`user:${idToAdd}:incoming_friend_request`, session.user.id);
     return new Response("Friend request sent.", { status: 200 });
   } catch (error) {
