@@ -65,7 +65,8 @@ NEXT_PUBLIC_PUSHER_APP_KEY=""
 PUSHER_APP_SECRET=""
 
 3. You're all set! Now, you can start the development server and enjoy the Realtime Chat App.
-
+## Link to Live version
+[Link](https://realtime-chat-app-nu-blond.vercel.app/dashboard)
 ## Acknowledgments
 
 This Realtime Chat App was developed with the guidance and support from the "Josh tried coding" YouTube channel. Thanks to "Josh tried coding" for the valuable tutorials and insights that made this project possible.
