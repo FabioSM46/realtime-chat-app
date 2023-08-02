@@ -70,7 +70,7 @@ PUSHER_APP_SECRET=""
 
 This Realtime Chat App was developed with the guidance and support from the "Josh tried coding" YouTube channel. Thanks to "Josh tried coding" for the valuable tutorials and insights that made this project possible.
 
-Make sure to check out the "Josh tried coding" channel for more amazing coding content and tutorials: [Josh tried coding - YouTube](https://www.youtube.com/c/joshtriedcoding)
+Make sure to check out the "Josh tried coding" channel for more amazing coding content and tutorials: [Josh tried coding - YouTube](https://www.youtube.com/@joshtriedcoding)
 
 ---
 
